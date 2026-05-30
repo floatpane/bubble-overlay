@@ -1,6 +1,6 @@
 module github.com/floatpane/bubble-overlay
 
-go 1.26
+go 1.26.3
 
 require github.com/charmbracelet/x/ansi v0.10.1
 
