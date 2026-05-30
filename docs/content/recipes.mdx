@@ -1,0 +1,88 @@
+---
+title: Recipes
+---
+
+# Recipes
+
+Small patterns for common overlay use cases.
+
+## Center a popup in the base view
+
+```go
+import "github.com/charmbracelet/x/ansi"
+
+func center(base, popup string) string {
+    baseLines := strings.Split(base, "\n")
+    popupLines := strings.Split(popup, "\n")
+
+    baseW := 0
+    for _, l := range baseLines {
+        if w := ansi.StringWidth(l); w > baseW {
+            baseW = w
+        }
+    }
+    popupW := 0
+    for _, l := range popupLines {
+        if w := ansi.StringWidth(l); w > popupW {
+            popupW = w
+        }
+    }
+
+    row := (len(baseLines) - len(popupLines)) / 2
+    col := (baseW - popupW) / 2
+    if row < 0 { row = 0 }
+    if col < 0 { col = 0 }
+    return overlay.Block(base, popupLines, row, col)
+}
+```
+
+## Bordered modal
+
+`lipgloss` borders compose with overlay naturally — render the modal
+with a `Border` style, then composite it onto the base:
+
+```go
+modal := lipgloss.NewStyle().
+    Border(lipgloss.RoundedBorder()).
+    BorderForeground(lipgloss.Color("57")).
+    Padding(1, 2).
+    Render("Delete this email?\n\nEnter — yes   Esc — no")
+
+out := overlay.Block(base, strings.Split(modal, "\n"), 4, 10)
+```
+
+## Tooltip on a specific cell
+
+For a single-line tooltip next to a cell at `(r, c)`:
+
+```go
+tip := lipgloss.NewStyle().
+    Background(lipgloss.Color("236")).
+    Foreground(lipgloss.Color("250")).
+    Padding(0, 1).
+    Render("press ? for help")
+
+out := overlay.Line(rows[r], tip, c+1)
+rows[r] = out
+view := strings.Join(rows, "\n")
+```
+
+## Multiple overlays
+
+`Block` is just a wrapper around repeated `Line` calls — you can chain
+overlays:
+
+```go
+view := base
+view = overlay.Block(view, statusBar, 0, 0)
+view = overlay.Block(view, sidebar, 1, 0)
+view = overlay.Block(view, modal,    5, 20)
+```
+
+Later overlays paint over earlier ones, so render in
+back-to-front order.
+
+> [!CAUTION]
+> Don't chain overlays inside a tight render loop. Each call rescans
+> the full base. For very large views, render base + overlay region
+> once and cache the result instead.

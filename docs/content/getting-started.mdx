@@ -1,0 +1,71 @@
+---
+title: Getting Started
+---
+
+# Getting Started
+
+## Install
+
+```bash
+go get github.com/floatpane/bubble-overlay
+```
+
+Requires Go 1.26+.
+
+## Minimal example
+
+```go
+package main
+
+import (
+    "fmt"
+    "strings"
+
+    "github.com/charmbracelet/lipgloss"
+    overlay "github.com/floatpane/bubble-overlay"
+)
+
+func main() {
+    base := lipgloss.NewStyle().
+        Foreground(lipgloss.Color("240")).
+        Render("a quiet inbox view\nwith two lines\nand a third\nand a fourth")
+
+    popup := lipgloss.NewStyle().
+        Background(lipgloss.Color("57")).
+        Foreground(lipgloss.Color("231")).
+        Padding(0, 1).
+        Render("are you sure?\nyes / no")
+
+    block := strings.Split(popup, "\n")
+    fmt.Println(overlay.Block(base, block, 1, 4))
+}
+```
+
+Run it and you'll see the popup painted at row 1, column 4 over the
+gray inbox view, with the inbox's color preserved on either side of the
+popup.
+
+## Bubble Tea integration
+
+Inside your `Model.View()`:
+
+```go
+func (m Model) View() string {
+    base := m.renderInbox()
+    if !m.showConfirm {
+        return base
+    }
+    popup := strings.Split(m.renderConfirmPopup(), "\n")
+    row, col := m.confirmPosition(base, popup)
+    return overlay.Block(base, popup, row, col)
+}
+```
+
+`renderInbox` and `renderConfirmPopup` return whatever you want — they
+don't need to know about each other. The composite happens at the
+view-layer boundary.
+
+> [!TIP]
+> Compute `(row, col)` once per render from the *visible* width/height
+> of the base view. `ansi.StringWidth` from `charmbracelet/x/ansi` is
+> the same width math `bubble-overlay` uses internally.

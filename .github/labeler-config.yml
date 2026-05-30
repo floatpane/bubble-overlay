@@ -1,0 +1,33 @@
+# Keyword regex labels for issues. PRs use labeler-config-pr.yml + pr-paths.yml.
+
+"bug": '\b([Bb]ug(s)?|[Ff]ix(es)?)\b'
+
+"enhancement": '\b([Ff]eat(s)?)\b'
+
+"documentation": '\b([Dd]ocumentation|[Dd]ocs|[Rr]eadme)\b'
+
+"question": '\b([Qq]uestion(s)?|[Hh]elp|[Hh]ow to)\b'
+
+"performance": '\b([Pp]erformance|[Oo]ptimiz(e|ation)|[Ss]peed|[Ee]fficiency)\b'
+
+"dependencies": '([Cc]hore\(deps\)|[Ff]ix\(deps\))'
+
+"ci": '\b([Cc]i|[Cc]ontinuous integration|[Bb]uild|[Ww]orkflow)\b'
+
+"chore": '\b([Cc]hore|[Mm]aintenance|[Rr]efactor|[Cc]leanup)\b'
+
+"security": '\b([Ss]ecurity|[Ee]scape|[Ii]njection|[Vv]ulnerabilit(y|ies)|[Cc][Vv][Ee])\b'
+
+"os/windows": '\b([Ww]indows|[Ww]in(10|11)|[Mm]icrosoft|[Cc]md|[Pp]ower[Ss]hell)\b'
+
+"os/linux": '\b([Ll]inux|[Uu]buntu|[Dd]ebian|[Ff]edora|[Aa]rch [Ll]inux|[Nn]ix[Oo][Ss]|[Pp]op!?_?[Oo][Ss])\b'
+
+"os/macos": '\b([Mm]ac[Oo][Ss]?|[Oo][Ss] ?[Xx]|[Dd]arwin|[Mm]acbook|[Tt]erminal\.app|[Ii][Tt]erm)\b'
+
+"area/overlay": '\b([Oo]verlay|[Bb]lock|[Ll]ine|[Mm]odal|[Pp]opup|[Tt]ooltip|[Pp]anel)\b'
+
+"area/ansi": '\b(ANSI|SGR|[Ee]scape|[Ww]idth|[Ww]ide ?char|[Ee]moji|CSI|[Tt]erminal cell)\b'
+
+"area/docs": '\b([Dd]ocumentation|[Dd]ocs|[Rr]eadme)\b'
+
+"area/ci": '\b([Cc]i|[Bb]uild|[Mm]akefile|[Gg]oreleaser)\b'

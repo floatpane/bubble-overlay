@@ -1,0 +1,46 @@
+---
+title: Introduction
+---
+
+# bubble-overlay
+
+`bubble-overlay` is a tiny Go library that paints rectangular blocks of
+styled text on top of an existing ANSI-styled string at a given
+`(row, col)` cell position.
+
+It's the missing primitive for modals, popups, tooltips, filepickers,
+and floating panels in [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+/ [lipgloss](https://github.com/charmbracelet/lipgloss) apps — render
+your base view as a single string, render your popup as another, then
+call `overlay.Block`.
+
+## Why
+
+The standard Bubble Tea pattern returns a single styled string from
+`View()`. When you want to render a modal on top, you usually have to:
+
+1. Re-render the base view with a "hole" cut out of it, or
+2. Walk the ANSI sequences yourself and splice the modal in.
+
+Both are tedious and easy to get wrong. `bubble-overlay` does the
+composite for you: the base view stays a single string, the modal stays
+a single string, and you get a single composited string back.
+
+## Features
+
+- **SGR-safe.** Existing styles around the overlay are preserved; cells
+  underneath are replaced. The overlay is terminated with `\x1b[0m` so
+  its styles don't bleed into the row's tail.
+- **Cell-accurate.** Uses `charmbracelet/x/ansi` for width math, so
+  wide-character / emoji handling matches the terminal's actual cell
+  grid.
+- **Auto-grow.** Overlays that extend past the bottom of the base
+  string append new lines instead of truncating.
+- **Auto-pad.** Overlays past the right edge of a short row are padded
+  with spaces, so a popup on row 3 col 40 lands correctly even when
+  that row is only 10 cells wide.
+- **Tiny.** Two functions. No state. Drop-in.
+
+> [!NOTE]
+> The package name is `overlay`, not `bubbleoverlay`. Import it as
+> `github.com/floatpane/bubble-overlay` and reference it as `overlay`.

@@ -1,0 +1,63 @@
+---
+title: API Reference
+---
+
+# API Reference
+
+Full reference on [pkg.go.dev](https://pkg.go.dev/github.com/floatpane/bubble-overlay).
+
+The whole API is two functions.
+
+## `func Block(base string, block []string, row, col int) string`
+
+Paints `block` line-by-line on top of `base` starting at the
+`(row, col)` cell position. Returns the composited string.
+
+- `row` and `col` are 0-indexed.
+- `col` is measured in **terminal cells**, not bytes or runes.
+- If `block` extends past the bottom of `base`, new lines are appended.
+- If `len(block) == 0`, returns `base` unchanged.
+
+```go
+base := "row0\nrow1\nrow2"
+out := overlay.Block(base, []string{"AA", "BB"}, 1, 1)
+// row0
+// rAA[reset]w1
+// rBB[reset]w2
+```
+
+## `func Line(base, overlay string, col int) string`
+
+Paints a single `overlay` line on top of `base` starting at column
+`col`.
+
+- Cells under the overlay are removed.
+- Cells to the left and right keep their existing ANSI styling.
+- If `col` exceeds the visible width of `base`, the gap is padded with
+  spaces.
+- A `\x1b[0m` reset is emitted **after** the overlay so the overlay's
+  styles don't bleed into the rest of the row.
+- If `overlay == ""`, returns `base` unchanged.
+
+```go
+out := overlay.Line("aaaaaaaaaa", "XXX", 3)
+// aaaXXX[reset]aaaa
+
+out := overlay.Line("ab", "X", 5)
+// ab   X[reset]
+```
+
+## Width math
+
+Both functions use `ansi.StringWidth`, `ansi.Truncate`, and `ansi.Cut`
+from [`charmbracelet/x/ansi`](https://github.com/charmbracelet/x). That
+means:
+
+- ANSI SGR sequences in `base` are counted as zero-width and preserved.
+- Wide characters (CJK, many emoji) are counted as 2 cells.
+- Combining marks and zero-width joiners are counted as 0 cells.
+
+> [!IMPORTANT]
+> If you compute `col` yourself, use the same width math. `len(s)`
+> (bytes) and `utf8.RuneCountInString(s)` (runes) will both give wrong
+> answers for any styled or wide-character base.

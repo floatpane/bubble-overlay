@@ -1,0 +1,55 @@
+# GoReleaser configuration for bubble-overlay.
+# bubble-overlay is a library, so we don't build binaries — we produce
+# source archives, a checksum file, and GitHub-native release notes on
+# tag push.
+# See: https://goreleaser.com/customization/
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+# Library: no binaries to build.
+builds:
+  - skip: true
+
+# Bundle a source tarball with each release for archival.
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}_{{ .Version }}_source"
+  format: tar.gz
+
+# Empty archives section is required when builds are skipped — the source
+# archive is configured above.
+archives:
+  - id: noop
+    meta: true
+    name_template: "{{ .ProjectName }}_{{ .Version }}_metadata"
+    files:
+      - LICENSE
+      - README.md
+      - SECURITY.md
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  # Use GitHub's release notes API — pulls PR titles and contributors.
+  # Categories configured in .github/release.yml.
+  use: github-native
+
+release:
+  draft: false
+  prerelease: auto
+  footer: |
+    ---
+    **Install:**
+
+    ```bash
+    go get github.com/floatpane/bubble-overlay@{{ .Tag }}
+    ```
+
+    See the [Go reference](https://pkg.go.dev/github.com/floatpane/bubble-overlay) for full API documentation.
