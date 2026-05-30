@@ -18,3 +18,4 @@ jobs:
           configurationFile: renovate.json
         env:
           RENOVATE_REPOSITORIES: floatpane/bubble-overlay
+
