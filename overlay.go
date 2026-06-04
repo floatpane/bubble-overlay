@@ -14,6 +14,37 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+// Center places popup as a floating layer centered over base within a screen
+// of screenW × screenH cells. The popup is a multi-line ANSI-styled string
+// (e.g. the output of a lipgloss.Render call). Cells outside the popup region
+// are taken from base; cells underneath the popup are replaced.
+//
+// This is the primary entry-point for modals, command palettes, and tooltips:
+//
+//	composited := overlay.Center(myView, myModal, termWidth, termHeight)
+func Center(base, popup string, screenW, screenH int) string {
+	lines := strings.Split(popup, "\n")
+
+	popupW := 0
+	for _, l := range lines {
+		if w := ansi.StringWidth(l); w > popupW {
+			popupW = w
+		}
+	}
+	popupH := len(lines)
+
+	col := (screenW - popupW) / 2
+	if col < 0 {
+		col = 0
+	}
+	row := (screenH - popupH) / 2
+	if row < 0 {
+		row = 0
+	}
+
+	return Block(base, lines, row, col)
+}
+
 // Block paints the lines of block on top of base starting at the
 // (row, col) cell position. Lines that extend past the bottom of base
 // are appended. The result preserves existing ANSI styling around the

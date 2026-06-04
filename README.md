@@ -63,17 +63,32 @@ func main() {
 }
 ```
 
-### API
+### Center a floating popup
+
+For the common case of a centered modal — command palette, confirmation dialog,
+tooltip — `Center` handles the positioning automatically:
 
 ```go
+composited := overlay.Center(baseView, popupView, termWidth, termHeight)
+```
+
+It computes the centered `(row, col)` from the popup's visual size and your
+screen dimensions, then calls `Block`. Rows/columns clamp to zero if the popup
+is larger than the screen.
+
+### Low-level API
+
+```go
+// Center places popup as a floating layer centered over base within a screen
+// of screenW × screenH cells.
+func Center(base, popup string, screenW, screenH int) string
+
 // Paint a multi-line block on top of base at (row, col).
 func Block(base string, block []string, row, col int) string
 
 // Paint a single overlay line on top of base at col.
 func Line(base, overlay string, col int) string
 ```
-
-That's the whole API.
 
 ## When to use this
 
