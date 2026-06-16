@@ -6,7 +6,9 @@ title: API Reference
 
 Full reference on [pkg.go.dev](https://pkg.go.dev/github.com/floatpane/bubble-overlay).
 
-The whole API is two functions.
+## Overlay primitives
+
+Two low-level compositing functions.
 
 ## `func Block(base string, block []string, row, col int) string`
 
@@ -61,3 +63,30 @@ means:
 > If you compute `col` yourself, use the same width math. `len(s)`
 > (bytes) and `utf8.RuneCountInString(s)` (runes) will both give wrong
 > answers for any styled or wide-character base.
+
+## Notification types
+
+Higher-level Bubble Tea models for dismissible styled notifications. See the
+[Notifications](./notifications) page for the full reference.
+
+| Constructor   | Color  | Icon |
+|---------------|--------|------|
+| `NewError`    | Red    | `✗`  |
+| `NewWarning`  | Yellow | `⚠`  |
+| `NewInfo`     | Cyan   | `ℹ`  |
+
+Each type is a `tea.Model` with `Init`, `Update`, `View`, `Done`, and
+`PlaceOn` methods. Options are passed as functional options:
+
+```go
+n := overlay.NewError(
+    overlay.WithTitle("Oops"),
+    overlay.WithMessage("Something went wrong."),
+    overlay.WithDismissMode(overlay.DismissEither),
+    overlay.WithDuration(8 * time.Second),
+    overlay.WithKey("esc"),
+    overlay.WithPosition(1, 2),
+    overlay.WithWidth(50),
+    overlay.WithIcon("✗"),
+)
+```

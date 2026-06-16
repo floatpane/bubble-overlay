@@ -4,6 +4,7 @@ const SECTIONS = [
 	{ title: "Introduction", slug: "introduction" },
 	{ title: "Getting Started", slug: "getting-started" },
 	{ title: "API Reference", slug: "api" },
+	{ title: "Notifications", slug: "notifications" },
 	{ title: "Recipes", slug: "recipes" },
 ];
 

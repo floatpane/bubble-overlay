@@ -1,0 +1,170 @@
+---
+title: Notifications
+---
+
+# Notifications
+
+`bubble-overlay` ships three ready-to-use Bubble Tea notification models that
+composite themselves onto any base view using the core `overlay.Block`
+primitive.
+
+| Type        | Color  | Default icon | Constructor    |
+|-------------|--------|--------------|----------------|
+| Error       | Red    | `✗`          | `NewError`     |
+| Warning     | Yellow | `⚠`          | `NewWarning`   |
+| Info        | Cyan   | `ℹ`          | `NewInfo`      |
+
+## Quick example
+
+```go
+import overlay "github.com/floatpane/bubble-overlay"
+
+// Inside your tea.Model:
+type Model struct {
+    notice overlay.Notification
+}
+
+func (m Model) Init() tea.Cmd {
+    m.notice = overlay.NewError(
+        overlay.WithTitle("Connection lost"),
+        overlay.WithMessage("Could not reach the server."),
+        overlay.WithKey("esc"),
+        overlay.WithPosition(2, 4),
+    )
+    return m.notice.Init()
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    updated, cmd := m.notice.Update(msg)
+    m.notice = updated.(overlay.Notification)
+    return m, cmd
+}
+
+func (m Model) View() string {
+    base := m.renderBase()
+    return m.notice.PlaceOn(base) // no-op once Done() is true
+}
+```
+
+## Dismiss modes
+
+### 1 — Key only (`DismissOnKey`)
+
+The default. The notification stays until the user presses the configured key.
+A `[key] close` hint is shown at the bottom.
+
+```go
+n := overlay.NewWarning(
+    overlay.WithTitle("Low disk space"),
+    overlay.WithKey("q"),               // default is already "q"
+)
+```
+
+### 2 — Timer only (`DismissAfterTimer`)
+
+Closes automatically after the configured duration. No key dismissal is
+available. A Unicode progress bar (`█░`) counts down the remaining time.
+
+```go
+n := overlay.NewInfo(
+    overlay.WithTitle("Saved"),
+    overlay.WithDismissMode(overlay.DismissAfterTimer),
+    overlay.WithDuration(3 * time.Second),
+)
+// Init() must be called (or returned from the parent Init) so ticks start.
+```
+
+### 3 — Timer with early-exit key (`DismissEither`)
+
+Closes after the configured duration **or** when the user presses the key,
+whichever comes first. Both the progress bar and the key hint are shown.
+
+```go
+n := overlay.NewError(
+    overlay.WithTitle("Build failed"),
+    overlay.WithMessage("See logs for details."),
+    overlay.WithDismissMode(overlay.DismissEither),
+    overlay.WithDuration(10 * time.Second),
+    overlay.WithKey("esc"),
+)
+```
+
+## Placement
+
+`WithPosition(row, col int)` sets where the notification is painted over the
+base view (0-indexed, in terminal cells). The default is `(0, 0)`.
+
+```go
+// Top-right corner of a 80×24 terminal, assuming the box is ~46 cells wide
+n := overlay.NewInfo(
+    overlay.WithPosition(1, 34),
+)
+```
+
+`PlaceOn(base string)` calls `overlay.Block` internally, so the same
+cell-accurate, SGR-safe compositing rules apply.
+
+## Customising the icon
+
+Each type has a default Unicode icon. Override it with `WithIcon`:
+
+```go
+n := overlay.NewError(WithIcon("🔥"))
+```
+
+Default constants are exported so you can reference them:
+
+```go
+overlay.DefaultErrorIcon   // "✗"
+overlay.DefaultWarningIcon // "⚠"
+overlay.DefaultInfoIcon    // "ℹ"
+```
+
+## All options
+
+| Option                      | Default        | Description                                                  |
+|-----------------------------|----------------|--------------------------------------------------------------|
+| `WithTitle(s)`              | `""`           | Title shown next to the icon.                                |
+| `WithMessage(s)`            | `""`           | Body text shown below the title.                             |
+| `WithKey(s)`                | `"q"`          | Key string used to dismiss (`"q"`, `"esc"`, `"enter"`, …).  |
+| `WithDismissMode(m)`        | `DismissOnKey` | How the notification is closed (see above).                  |
+| `WithDuration(d)`           | `5s`           | Auto-close duration for timer-based modes.                   |
+| `WithPosition(row, col)`    | `(0, 0)`       | Cell position in the base view.                              |
+| `WithIcon(s)`               | type default   | Unicode icon prepended to the header.                        |
+| `WithWidth(n)`              | `40`           | Inner content width in terminal cells.                       |
+
+## Checking dismissal
+
+```go
+if m.notice.Done() {
+    // notification has been closed; stop forwarding messages to it
+}
+```
+
+`Done` also gates `View` and `PlaceOn`: both are no-ops once the notification
+is dismissed.
+
+## Multiple notifications
+
+Layer them with chained `PlaceOn` calls:
+
+```go
+func (m Model) View() string {
+    base := m.renderBase()
+    base = m.errNotice.PlaceOn(base)
+    base = m.warnNotice.PlaceOn(base)
+    return base
+}
+```
+
+Later calls paint over earlier ones, so render in back-to-front order.
+
+> [!TIP]
+> Run `Init()` on each notification model and merge the resulting `tea.Cmd`
+> values with `tea.Batch` so all timers start together.
+
+```go
+func (m Model) Init() tea.Cmd {
+    return tea.Batch(m.errNotice.Init(), m.warnNotice.Init())
+}
+```
