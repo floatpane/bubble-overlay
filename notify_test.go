@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // --- Constructor defaults ---
@@ -98,7 +98,7 @@ func TestOptionsApplied(t *testing.T) {
 
 func TestDismissOnKeyClosesOnCorrectKey(t *testing.T) {
 	n := NewError(WithKey("q"))
-	m, _ := n.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	m, _ := n.Update(tea.KeyPressMsg{Text: "q"})
 	if !m.(Notification).Done() {
 		t.Fatal("should be done after correct key press")
 	}
@@ -106,7 +106,7 @@ func TestDismissOnKeyClosesOnCorrectKey(t *testing.T) {
 
 func TestDismissOnKeyIgnoresWrongKey(t *testing.T) {
 	n := NewError(WithKey("q"))
-	m, _ := n.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	m, _ := n.Update(tea.KeyPressMsg{Text: "x"})
 	if m.(Notification).Done() {
 		t.Fatal("should not be done on wrong key")
 	}
@@ -124,7 +124,7 @@ func TestDismissOnKeyIgnoresTick(t *testing.T) {
 
 func TestDismissAfterTimerIgnoresKey(t *testing.T) {
 	n := NewError(WithDismissMode(DismissAfterTimer), WithKey("q"))
-	m, _ := n.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	m, _ := n.Update(tea.KeyPressMsg{Text: "q"})
 	if m.(Notification).Done() {
 		t.Fatal("timer-only mode must not close on key press")
 	}
@@ -155,7 +155,7 @@ func TestDismissAfterTimerExpiresWhenElapsedReachesDuration(t *testing.T) {
 
 func TestDismissEitherClosesOnKey(t *testing.T) {
 	n := NewError(WithDismissMode(DismissEither), WithKey("esc"))
-	m, _ := n.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ := n.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if !m.(Notification).Done() {
 		t.Fatal("DismissEither should close on key press")
 	}
@@ -199,7 +199,7 @@ func TestInitReturnsNilWhenDone(t *testing.T) {
 
 func TestViewContainsTitleAndMessage(t *testing.T) {
 	n := NewError(WithTitle("Disk full"), WithMessage("Clean up space"))
-	v := n.View()
+	v := n.Render()
 	if !strings.Contains(v, "Disk full") {
 		t.Fatalf("view missing title: %q", v)
 	}
@@ -210,22 +210,22 @@ func TestViewContainsTitleAndMessage(t *testing.T) {
 
 func TestViewContainsIcon(t *testing.T) {
 	n := NewError()
-	if !strings.Contains(n.View(), DefaultErrorIcon) {
+	if !strings.Contains(n.Render(), DefaultErrorIcon) {
 		t.Fatal("view missing default error icon")
 	}
 	n2 := NewWarning()
-	if !strings.Contains(n2.View(), DefaultWarningIcon) {
+	if !strings.Contains(n2.Render(), DefaultWarningIcon) {
 		t.Fatal("view missing default warning icon")
 	}
 	n3 := NewInfo()
-	if !strings.Contains(n3.View(), DefaultInfoIcon) {
+	if !strings.Contains(n3.Render(), DefaultInfoIcon) {
 		t.Fatal("view missing default info icon")
 	}
 }
 
 func TestViewContainsKeyHintForDismissOnKey(t *testing.T) {
 	n := NewError(WithKey("esc"))
-	if !strings.Contains(n.View(), "[esc]") {
+	if !strings.Contains(n.Render(), "[esc]") {
 		t.Fatal("key-only view should show key hint")
 	}
 }
@@ -233,7 +233,7 @@ func TestViewContainsKeyHintForDismissOnKey(t *testing.T) {
 func TestViewContainsProgressBarForTimerModes(t *testing.T) {
 	for _, mode := range []DismissMode{DismissAfterTimer, DismissEither} {
 		n := NewError(WithDismissMode(mode))
-		v := n.View()
+		v := n.Render()
 		if !strings.Contains(v, "░") && !strings.Contains(v, "█") {
 			t.Fatalf("timer mode %v should show progress bar in view", mode)
 		}
@@ -242,18 +242,18 @@ func TestViewContainsProgressBarForTimerModes(t *testing.T) {
 
 func TestViewEmptyWhenDone(t *testing.T) {
 	n := NewError()
-	m, _ := n.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	if v := m.(Notification).View(); v != "" {
+	m, _ := n.Update(tea.KeyPressMsg{Text: "q"})
+	if v := m.(Notification).Render(); v != "" {
 		t.Fatalf("View should be empty when done, got %q", v)
 	}
 }
 
 func TestViewCustomIcon(t *testing.T) {
 	n := NewInfo(WithIcon("→"))
-	if !strings.Contains(n.View(), "→") {
+	if !strings.Contains(n.Render(), "→") {
 		t.Fatal("view should use custom icon")
 	}
-	if strings.Contains(n.View(), DefaultInfoIcon) {
+	if strings.Contains(n.Render(), DefaultInfoIcon) {
 		t.Fatal("view should not contain default icon when overridden")
 	}
 }
@@ -262,7 +262,7 @@ func TestViewCustomIcon(t *testing.T) {
 
 func TestPlaceOnReturnBaseWhenDone(t *testing.T) {
 	n := NewError(WithPosition(0, 0))
-	m, _ := n.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	m, _ := n.Update(tea.KeyPressMsg{Text: "q"})
 	base := "hello world"
 	if got := m.(Notification).PlaceOn(base); got != base {
 		t.Fatalf("PlaceOn should return base unchanged when done, got %q", got)

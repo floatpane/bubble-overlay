@@ -34,11 +34,12 @@ package overlay
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // Kind identifies the semantic type and default styling of a [Notification].
@@ -219,12 +220,18 @@ func (n Notification) PlaceOn(base string) string {
 	if n.done {
 		return base
 	}
-	return Block(base, strings.Split(n.View(), "\n"), n.row, n.col)
+	return Block(base, strings.Split(n.Render(), "\n"), n.row, n.col)
 }
 
 // View implements [tea.Model]. Returns the fully rendered, bordered
-// notification box. Returns "" when [Done] is true.
-func (n Notification) View() string {
+// notification box. Returns an empty view when [Done] is true.
+func (n Notification) View() tea.View {
+	return tea.NewView(n.Render())
+}
+
+// Render returns the fully rendered, bordered notification box as a string.
+// Returns "" when [Done] is true.
+func (n Notification) Render() string {
 	if n.done {
 		return ""
 	}
@@ -294,7 +301,7 @@ func notifyProgressBar(elapsed, total time.Duration, width int) string {
 	return strings.Repeat("█", filled) + strings.Repeat("░", width-filled)
 }
 
-func kindColor(k Kind) lipgloss.Color {
+func kindColor(k Kind) color.Color {
 	switch k {
 	case KindError:
 		return lipgloss.Color("9") // bright red

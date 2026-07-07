@@ -120,3 +120,62 @@ func TestCenterClampsToZeroWhenPopupLargerThanScreen(t *testing.T) {
 		t.Errorf("popup content missing: %q", got)
 	}
 }
+
+func TestBlockFloatPlacesBelowCursor(t *testing.T) {
+	// 20×10 screen, cursor at (2, 3), 2-line popup → row=3, col=3
+	base := strings.Repeat(strings.Repeat(".", 20)+"\n", 9) + strings.Repeat(".", 20)
+	popup := []string{"AAAA", "BBBB"}
+	got := BlockFloat(base, popup, 2, 3, 20, 10)
+	lines := strings.Split(got, "\n")
+	if !strings.Contains(lines[3], "AAAA") {
+		t.Errorf("popup row 0 should be on line 3: %q", lines[3])
+	}
+	if !strings.Contains(lines[4], "BBBB") {
+		t.Errorf("popup row 1 should be on line 4: %q", lines[4])
+	}
+}
+
+func TestBlockFloatFlipsAboveWhenNoRoomBelow(t *testing.T) {
+	// 20×5 screen, cursor at row 4 (last row), 2-line popup
+	// → row = 4-2 = 2 (above cursor)
+	base := strings.Repeat(strings.Repeat(".", 20)+"\n", 4) + strings.Repeat(".", 20)
+	popup := []string{"AAAA", "BBBB"}
+	got := BlockFloat(base, popup, 4, 3, 20, 5)
+	lines := strings.Split(got, "\n")
+	if !strings.Contains(lines[2], "AAAA") {
+		t.Errorf("popup should flip above cursor to row 2: %q", lines[2])
+	}
+	if !strings.Contains(lines[3], "BBBB") {
+		t.Errorf("popup row 1 should be on line 3: %q", lines[3])
+	}
+}
+
+func TestBlockFloatShiftsLeftOnOverflow(t *testing.T) {
+	// 10×10 screen, cursor at col 8, 4-wide popup
+	// → col = 10-4 = 6 (shifted left to fit)
+	base := strings.Repeat(strings.Repeat(".", 10)+"\n", 9) + strings.Repeat(".", 10)
+	popup := []string{"PPPP"}
+	got := BlockFloat(base, popup, 0, 8, 10, 10)
+	lines := strings.Split(got, "\n")
+	stripped := ansi.Strip(lines[1])
+	// Popup should start at col 6, so 6 dots then PPPP
+	if !strings.Contains(stripped, "PPPP") {
+		t.Errorf("popup missing: %q", lines[1])
+	}
+}
+
+func TestSgrStateAtPreservesColorAfterOverlay(t *testing.T) {
+	// Base has red text; overlay replaces middle; the right portion
+	// should still be red because sgrStateAt re-emits the SGR.
+	base := "\x1b[31maaaaa\x1b[0m"
+	got := Line(base, "XX", 1)
+	// After overlay: left(1 red) + XX + reset + sgr(red) + right(2 red)
+	// The right portion should contain the red SGR sequence
+	if !strings.Contains(got, "\x1b[31m") {
+		t.Fatalf("right portion should re-emit red SGR: %q", got)
+	}
+	// Visible width should be 5
+	if w := ansi.StringWidth(got); w != 5 {
+		t.Fatalf("visible width: got %d, want 5; %q", w, got)
+	}
+}
