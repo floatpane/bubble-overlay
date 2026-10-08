@@ -1,6 +1,6 @@
 module github.com/floatpane/bubble-overlay
 
-go 1.26
+go 1.27.2
 
 require (
 	charm.land/bubbletea/v2 v2.0.0
